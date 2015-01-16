@@ -139,7 +139,7 @@ Getting Around
    of ``typ``, excluding type ``Any``.
 
    The optional second argument restricts the search to a particular module
-   or function.
+   or function (default is Main).
 
 .. function:: @show
 

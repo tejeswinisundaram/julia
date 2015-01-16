@@ -36,6 +36,7 @@ for (typ, name) in [
     @test sprint(help, typ) == sprint(help, name)
 end
 
+Core.eval(Main, :( # eval in Main so that this module has a real path
 module DataTypeHelpTest
 
 module M
@@ -54,27 +55,17 @@ module P
   import .R.T
 end
 
-const mod = string(current_module())
+const mod = current_module()
+const smod = join(fullname(mod), ".")
 
-Base.Help.eval(quote
+Base.Help.MODULE_DICT["T"] = ["$smod.M","$smod.N","$smod.P"]
+Base.Help.MODULE_DICT["U"] = ["$smod.P","$smod.P.R"]
 
-    init_help()
-
-    import $(parse(mod))
-    import $(parse(mod)): M, N, P
-
-    const mod = $mod
-
-    MODULE_DICT["T"] = ["$mod.M","$mod.N","$mod.P"]
-    MODULE_DICT["U"] = ["$mod.P","$mod.P.R"]
-
-    FUNCTION_DICT["$mod.M.T"]   = ["M.T"]
-    FUNCTION_DICT["$mod.N.T"]   = ["N.T"]
-    FUNCTION_DICT["$mod.P.T"]   = ["P.R.T"]
-    FUNCTION_DICT["$mod.P.U"]   = ["P.U"]
-    FUNCTION_DICT["$mod.P.R.U"] = ["P.R.U"]
-
-end)
+Base.Help.FUNCTION_DICT["$smod.M.T"]   = ["M.T"]
+Base.Help.FUNCTION_DICT["$smod.N.T"]   = ["N.T"]
+Base.Help.FUNCTION_DICT["$smod.P.T"]   = ["P.R.T"]
+Base.Help.FUNCTION_DICT["$smod.P.U"]   = ["P.U"]
+Base.Help.FUNCTION_DICT["$smod.P.R.U"] = ["P.R.U"]
 
 import Base.Test.@test
 
@@ -87,7 +78,8 @@ import Base.Test.@test
 @test sprint(help, "$mod.P.T")   == "P.R.T\n"
 @test sprint(help, "$mod.P.R.U") == "P.R.U\n"
 @test sprint(help, "T") == "M.T\n\nN.T\n\nP.R.T\n"
-end
+end  # module
+)) # eval
 
 # General tests for docstrings.
 

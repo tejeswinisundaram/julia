@@ -87,16 +87,16 @@ end
 
 func_expr_from_symbols(s::Vector{Symbol}) = length(s) == 1 ? s[1] : Expr(:., func_expr_from_symbols(s[1:end-1]), Expr(:quote, s[end]))
 
-module_defined(x::Symbol) = isdefined(x)
+module_defined(x::Symbol) = isdefined(Main, x)
 module_defined(x::Expr) =
     x.head == :. &&
     module_defined(x.args[1]) &&
-    isdefined(eval(x.args[1]), x.args[2].value)
+    isdefined(eval(Main, x.args[1]), x.args[2].value)
 
 function is_defined_in_module(name::AbstractString, obj::DataType, mod::AbstractString)
     module_defined(parse(mod)) &&
-    isdefined(eval(parse(mod)), symbol(name)) &&
-    eval(parse("$mod.$name")) == obj
+    isdefined(eval(Main, parse(mod)), symbol(name)) &&
+    eval(Main, parse("$mod.$name")) == obj
 end
 
 function help(io::IO, fname::AbstractString, obj=0)
@@ -111,13 +111,12 @@ function help(io::IO, fname::AbstractString, obj=0)
         for mod in allmods
             mfname = isempty(mod) ? fname : mod * "." * fname
             if isgeneric(obj)
-                mf = eval(func_expr_from_symbols(map(symbol, split(mfname, r"(?<!\.)\."))))
+                mf = eval(Main, func_expr_from_symbols(map(symbol, split(mfname, r"(?<!\.)\."))))
                 if mf === obj
                     append!(alldesc, FUNCTION_DICT[mfname])
                     found = true
                 end
             elseif isa(obj, DataType)
-                mfname = isempty(mod) ? fname : mod * "." * fname
                 if is_defined_in_module(fname, obj, mod) ||
                    is_defined_in_module(fname, obj, "Base."*mod)
                     append!(alldesc, FUNCTION_DICT[mfname])
