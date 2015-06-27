@@ -136,57 +136,55 @@ end
     Expr(:block, Expr(:meta, :inline), ex)
 end
 
-_checkbounds(sz, i) = throw(ArgumentError("unable to check bounds for indices of type $(typeof(i))"))
-_checkbounds(sz, i::Real) = 1 <= i <= sz
-_checkbounds(sz, ::Colon) = true
-_checkbounds(sz, r::Range) = (@_inline_meta; isempty(r) || (_checkbounds(sz, minimum(r)) && _checkbounds(sz,maximum(r))))
-_checkbounds(sz, I::AbstractVector{Bool}) = length(I) == sz
-function _checkbounds(sz, I::AbstractArray)
-    @_inline_meta
-    b = true
-    for i in I
-        b &= _checkbounds(sz, i)
-    end
-    b
-end
 # Prevent allocation of a GC frame by hiding the BoundsError in a noinline function
 throw_boundserror(A, I) = (@_noinline_meta; throw(BoundsError(A, I)))
 
-checkbounds(A::AbstractArray, I::AbstractArray{Bool}) = size(A) == size(I) || throw_boundserror(A, I)
-checkbounds(A::AbstractArray, I::AbstractVector{Bool}) = length(A) == length(I) || throw_boundserror(A, I)
-checkbounds(A::AbstractArray, I::Union{Real,AbstractArray,Colon}) = (@_inline_meta; _checkbounds(length(A), I) || throw_boundserror(A, I))
-function checkbounds(A::AbstractMatrix, I::Union{Real,AbstractArray,Colon}, J::Union{Real,AbstractArray,Colon})
+checkbounds(A::AbstractArray, I) = (@_inline_meta; in_bounds(length(A), I) || throw_boundserror(A, I))
+function checkbounds(A::AbstractMatrix, I, J)
     @_inline_meta
-    (_checkbounds(size(A,1), I) && _checkbounds(size(A,2), J)) ||
+    (in_bounds(size(A,1), I) && in_bounds(size(A,2), J)) ||
         throw_boundserror(A, (I, J))
 end
-function checkbounds(A::AbstractArray, I::Union{Real,AbstractArray,Colon}, J::Union{Real,AbstractArray,Colon})
+function checkbounds(A::AbstractArray, I, J)
     @_inline_meta
-    (_checkbounds(size(A,1), I) && _checkbounds(trailingsize(A,Val{2}), J)) ||
+    (in_bounds(size(A,1), I) && in_bounds(trailingsize(A,Val{2}), J)) ||
         throw_boundserror(A, (I, J))
 end
-@generated function checkbounds(A::AbstractArray, I::Union{Real,AbstractArray,Colon}...)
+@generated function checkbounds(A::AbstractArray, I...)
     meta = Expr(:meta, :inline)
     N = length(I)
     Isplat = [:(I[$d]) for d=1:N]
     error = :(throw_boundserror(A, tuple($(Isplat...))))
-    args = Expr[:(_checkbounds(size(A,$dim), I[$dim]) || $error) for dim in 1:N-1]
-    push!(args, :(_checkbounds(trailingsize(A,Val{$N}), I[$N]) || $error))
+    args = Expr[:(in_bounds(size(A,$dim), I[$dim]) || $error) for dim in 1:N-1]
+    push!(args, :(in_bounds(trailingsize(A,Val{$N}), I[$N]) || $error))
     Expr(:block, meta, args...)
 end
 
-## Bounds-checking without errors ##
-in_bounds(l::Int, i::Integer) = 1 <= i <= l
-function in_bounds(sz::Dims, I::Int...)
+## Bounds-checking without errors; simply return true or false ##
+in_bounds(sz, i) = throw(ArgumentError("unable to check bounds for indices of type $(typeof(i))"))
+in_bounds(sz, i::Real) = 1 <= i <= sz
+in_bounds(sz, ::Colon) = true
+in_bounds(sz, r::Range) = (@_inline_meta; isempty(r) || (in_bounds(sz, minimum(r)) && in_bounds(sz,maximum(r))))
+in_bounds(sz, I::AbstractVector{Bool}) = length(I) == sz
+function in_bounds(sz, I::AbstractArray)
+    @_inline_meta
+    b = true
+    for i in I
+        b &= in_bounds(sz, i)
+    end
+    b
+end
+
+function in_bounds(sz::Dims, I...)
     n = length(I)
     for dim = 1:(n-1)
-        1 <= I[dim] <= sz[dim] || return false
+        in_bounds(sz[dim], I[dim]) || return false
     end
     s = sz[n]
     for i = n+1:length(sz)
         s *= sz[i]
     end
-    1 <= I[n] <= s
+    in_bounds(s, I[n])
 end
 
 ## Constructors ##
