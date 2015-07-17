@@ -1153,7 +1153,7 @@ export
     nb_available,
     ntoh,
     open,
-    pipe,
+    pipeline,
     Pipe,
     PipeBuffer,
     poll_fd,
