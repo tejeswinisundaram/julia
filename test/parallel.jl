@@ -1,18 +1,30 @@
 # This file is a part of Julia. License is MIT: http://julialang.org/license
 
 # NOTE: worker processes cannot add more workers, only the client process can.
-using Base.Test
-
 if nworkers() < 3
     remotecall_fetch(1, () -> addprocs(3 - nworkers()))
 end
+
+modname = gensym(:anon)
+@sync for p in procs()
+    if p != myid()
+        modexpr = (modname) -> (Core.eval(Main, :(module $modname end)); nothing)
+        modexpr.code.module = Main
+        @async remotecall_fetch(p, modexpr, modname)
+    end
+end
+
+Core.eval(Main, :(module $modname # needs a real path for serialize/deserialize (not __anon__)
+using Base.Test
 
 id_me = myid()
 id_other = filter(x -> x != id_me, procs())[rand(1:(nprocs()-1))]
 
 @test fetch(@spawnat id_other myid()) == id_other
-@test @fetchfrom id_other begin myid() end == id_other
-@fetch begin myid() end
+let id_other = id_other
+@test @fetchfrom(id_other, begin myid() end == id_other)
+end
+@test 0 != @fetch(begin myid() end)::Int
 
 rr=RemoteRef()
 a = rand(5,5)
@@ -199,8 +211,8 @@ ntasks = 10
 rr_list = [RemoteRef() for x in 1:ntasks]
 a=ones(2*10^5);
 for rr in rr_list
-    @async let rr=rr
-        try
+    let rr=rr
+        @async try
             for i in 1:10
                 @test a == remotecall_fetch(id_other, (x)->x, a)
                 yield()
@@ -323,3 +335,4 @@ let A = [], B = []
     end
     @test (A == [11]) != (B == [11])
 end
+end)) # module, eval
