@@ -29,14 +29,17 @@ doc/_build/html:
 	@$(MAKE) -C doc html
 
 # doc needs to live under $(build_docdir), not under $(build_datarootdir)/julia/
-CLEAN_TARGETS += clean-$(build_docdir)
-clean-$(build_docdir):
+CLEAN_TARGETS += clean-docdir
+clean-docdir:
 	@-rm -fr $(abspath $(build_docdir))
-$(subst $(abspath $(JULIAHOME))/,,$(abspath $(build_docdir))): $(build_docdir)
-$(build_docdir):
-	@mkdir -p $@/examples
-	@cp -R examples/*.jl $@/examples/
-	@cp -R examples/clustermanager $@/examples/
+
+$(build_prefix)/.examples: $(wildcard examples/*.jl) $(shell find examples/clustermanager)
+	@echo Copying in usr/share/doc/julia/examples
+	@-rm -fr $(build_docdir)/examples
+	@mkdir -p $(build_docdir)/examples
+	@cp -R examples/*.jl $(build_docdir)/examples/
+	@cp -R examples/clustermanager $(build_docdir)/examples/
+	@touch $@
 
 julia-symlink: julia-ui-$(JULIA_BUILD_MODE)
 ifneq ($(OS),WINNT)
@@ -45,10 +48,10 @@ ifndef JULIA_VAGRANT_BUILD
 endif
 endif
 
-julia-deps: | $(DIRS) $(build_datarootdir)/julia/base $(build_datarootdir)/julia/test $(build_docdir) $(build_sysconfdir)/julia/juliarc.jl $(build_man1dir)/julia.1
+julia-deps: | $(DIRS) $(build_datarootdir)/julia/base $(build_datarootdir)/julia/test
 	@$(MAKE) $(QUIET_MAKE) -C deps
 
-julia-base: julia-deps $(build_docdir)/helpdb.jl
+julia-base: julia-deps $(build_sysconfdir)/julia/juliarc.jl $(build_man1dir)/julia.1  $(build_docdir)/helpdb.jl
 	@$(MAKE) $(QUIET_MAKE) -C base
 
 julia-libccalltest:
@@ -125,13 +128,16 @@ release-candidate: release testall
 	@echo
 
 $(build_docdir)/helpdb.jl: doc/helpdb.jl | $(build_docdir)
+	@echo Copying in usr/share/doc/julia/helpdb.jl
 	@cp $< $@
 
 $(build_man1dir)/julia.1: doc/man/julia.1 | $(build_man1dir)
+	@echo Copying in usr/share/man/man1/julia.1
 	@mkdir -p $(build_man1dir)
 	@cp $< $@
 
 $(build_sysconfdir)/julia/juliarc.jl: etc/juliarc.jl | $(build_sysconfdir)/julia
+	@echo Creating usr/etc/julia/juliarc.jl
 	@cp $< $@
 ifeq ($(OS), WINNT)
 	@cat ./contrib/windows/juliarc.jl >> $(build_sysconfdir)/julia/juliarc.jl
@@ -503,7 +509,7 @@ distcleanall: cleanall
 	julia-debug julia-release julia-deps \
 	julia-ui-release julia-ui-debug julia-src-release julia-src-debug \
 	julia-symlink julia-base julia-inference julia-sysimg-release julia-sysimg-debug \
-	test testall testall1 test clean distcleanall cleanall \
+	test testall testall1 test clean distcleanall cleanall clean-* \
 	run-julia run-julia-debug run-julia-release run \
 	install binary-dist light-source-dist.tmp light-source-dist \
 	dist full-source-dist source-dist
