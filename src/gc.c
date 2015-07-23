@@ -76,8 +76,9 @@ typedef struct _buff_t {
         uptrint_t flags;
         jl_value_t *type; // 16-bytes aligned
         struct {
-            uintptr_t gc_bits:2;
             uintptr_t pooled:1;
+            uintptr_t gc_bits:2;
+            uintptr_t gc_bits_high:1;
         };
     };
     // Work around a bug affecting gcc up to (at least) version 4.4.7
@@ -103,7 +104,11 @@ typedef struct _bigval_t {
     union {
         uptrint_t header;
         uptrint_t flags;
-        uptrint_t gc_bits:2;
+        struct {
+            uintptr_t gc_bits_low:1;
+            uptrint_t gc_bits:2;
+            uintptr_t gc_bits_high:1;
+        };
     };
     // Work around a bug affecting gcc up to (at least) version 4.4.7
     // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=36839
