@@ -259,6 +259,7 @@ static int check_timeout = 0;
 static gcpage_t *page_metadata(void *data);
 static void pre_mark(void);
 static void post_mark(arraylist_t *list, int dryrun);
+static region_t *find_region(void *ptr, int maybe);
 
 #include "gc-debug.c"
 
@@ -392,20 +393,48 @@ void jl_finalize(jl_value_t *o)
 }
 
 #define PAGE_INDEX(region, data) ((GC_PAGE_DATA((data) - GC_PAGE_OFFSET) - &(region)->pages[0][0])/GC_PAGE_SZ)
-static region_t *find_region(void *ptr)
+static region_t *find_region(void *ptr, int maybe)
 {
     // on 64bit systems we could probably use a single region and remove this loop
     for (int i = 0; i < REGION_COUNT && regions[i]; i++) {
-        if ((char*)ptr >= (char*)regions[i] && (char*)ptr <= (char*)regions[i] + sizeof(region_t))
+        char *begin = &regions[i]->pages[0][0];
+        char *end = begin + sizeof(regions[i]->pages);
+        if ((char*)ptr >= begin && (char*)ptr <= end)
             return regions[i];
     }
-    assert(0 && "find_region failed");
+    (void)maybe;
+    assert(maybe && "find_region failed");
     return NULL;
+}
+
+// Find the memory block in the pool that owns the byte pointed to by p.
+// For end of object pointer (which is always the case for pointer to a
+// singleton object), this usually returns the same pointer which points to
+// the next object but it can also return NULL if the pointer is pointing to
+// the end of the page.
+DLLEXPORT jl_taggedvalue_t *jl_gc_find_taggedvalue_pool(char *p,
+                                                        size_t *osize_p)
+{
+    region_t *r = find_region(p, 1);
+    if (!r)
+        return NULL;
+    char *page_begin = GC_PAGE_DATA(p) + GC_PAGE_OFFSET;
+    if (p < page_begin)
+        return NULL;
+    size_t ofs = p - page_begin;
+    int pg_idx = PAGE_INDEX(r, p);
+    gcpage_t *pagemeta = &r->meta[pg_idx];
+    int osize = pagemeta->osize;
+    if (osize == 0)
+        return NULL;
+    if (osize_p)
+        *osize_p = osize;
+    return (jl_taggedvalue_t*)((char*)p - (ofs % osize));
 }
 
 static gcpage_t *page_metadata(void *data)
 {
-    region_t *r = find_region(data);
+    region_t *r = find_region(data, 0);
     int pg_idx = PAGE_INDEX(r, (char*)data);
     return &r->meta[pg_idx];
 }
