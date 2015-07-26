@@ -260,6 +260,15 @@ static gcpage_t *page_metadata(void *data);
 static void pre_mark(void);
 static void post_mark(arraylist_t *list, int dryrun);
 static region_t *find_region(void *ptr, int maybe);
+jl_taggedvalue_t *jl_gc_find_taggedvalue_pool(char *p, size_t *osize_p);
+
+NOINLINE static uintptr_t gc_get_stack_ptr()
+{
+    void *dummy = NULL;
+    // The mask is to suppress the compiler warning about returning
+    // address of local variable
+    return (uintptr_t)&dummy & ~(uintptr_t)15;
+}
 
 #include "gc-debug.c"
 
@@ -1997,6 +2006,7 @@ void jl_gc_collect(int full)
 {
     if (!is_gc_enabled) return;
     if (jl_in_gc) return;
+    char *stack_hi = (char*)gc_get_stack_ptr();
     gc_debug_print();
     JL_SIGATOMIC_BEGIN();
     jl_in_gc = 1;
@@ -2098,6 +2108,7 @@ void jl_gc_collect(int full)
 #endif
             estimate_freed = live_bytes - scanned_bytes - perm_scanned_bytes + actual_allocd;
 
+            gc_scrub(stack_hi);
             gc_verify();
 
 #if defined(MEMPROFILE)
