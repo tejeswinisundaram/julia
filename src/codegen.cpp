@@ -4610,6 +4610,7 @@ static Function *emit_function(jl_lambda_info_t *lam)
     }
 
     // step 15. compile body statements
+    DebugLoc lastloc = DebugLoc::get(lno, 1, (MDNode*)SP, NULL);
     bool prevlabel = false;
     lno = -1;
     int prevlno = -1;
@@ -4618,7 +4619,7 @@ static Function *emit_function(jl_lambda_info_t *lam)
         if (jl_is_linenode(stmt)) {
             lno = jl_linenode_line(stmt);
             if (ctx.debug_enabled)
-                builder.SetCurrentDebugLocation(DebugLoc::get(lno, 1, (MDNode*)SP, NULL));
+                lastloc = DebugLoc::get(lno, 1, (MDNode*)SP, NULL);
             if (do_coverage)
                 coverageVisitLine(filename, lno);
             ctx.lineno = lno;
@@ -4651,6 +4652,17 @@ static Function *emit_function(jl_lambda_info_t *lam)
                             dfil = filescopes[file] = (MDNode*)dbuilder.createFile(file->name, ".");
                             #endif
                         }
+
+                        //if ( strcmp(DIFile(dfil).getFilename().data(), file->name) != 0 ) {
+                        if (true) {
+                            MDNode *outerfile  = (MDNode*)dbuilder.createLexicalBlockFile(DIDescriptor(lastloc.getScope(jl_LLVMContext)),
+                                                                                          DIFile(lastloc.getScope(jl_LLVMContext)));
+                            MDNode *outerscope = (MDNode*)dbuilder.createLexicalBlock(DIDescriptor(outerfile),
+                                                                             fil,
+                                                                             lastloc.getLine(), 0);
+                            MDNode *newscope = (MDNode*)dbuilder.createLexicalBlockFile(DIDescriptor(outerscope), DIFile(dfil));
+                            lastloc = DebugLoc::get(lno, 1, newscope, NULL);
+                        }
                     }
                 }
             }
@@ -4665,7 +4677,7 @@ static Function *emit_function(jl_lambda_info_t *lam)
                     scope = (MDNode*)dbuilder.createLexicalBlockFile(SP,DIFile(dfil));
 #endif
                 }
-                builder.SetCurrentDebugLocation(DebugLoc::get(lno, 1, scope, NULL));
+                builder.SetCurrentDebugLocation(lastloc);
             }
             if (do_coverage)
                 coverageVisitLine(filename, lno);

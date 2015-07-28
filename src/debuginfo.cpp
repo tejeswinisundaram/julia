@@ -720,6 +720,8 @@ lookup:
     }
 }
 
+#include <iostream>
+
 void jl_getFunctionInfo(const char **name, size_t *line, const char **filename, size_t pointer, int *fromC, int skipC)
 {
     *name = NULL;
@@ -781,6 +783,8 @@ void jl_getFunctionInfo(const char **name, size_t *line, const char **filename, 
         if ((*it).second.func) {
             DISubprogram debugscope =
                 DISubprogram(prev.Loc.getScope((*it).second.func->getContext()));
+            DILexicalBlockFile dblf = DILexicalBlockFile(prev.Loc.getScope((*it).second.func->getContext()));
+            DebugLoc dbl = DebugLoc::getFromDILexicalBlock(prev.Loc.getScope((*it).second.func->getContext()));
             *filename = debugscope.getFilename().data();
             // the DISubprogram has the un-mangled name, so use that if
             // available. However, if the scope need not be the current
@@ -802,8 +806,33 @@ void jl_getFunctionInfo(const char **name, size_t *line, const char **filename, 
             vit++;
         }
         if (*line == (size_t) -1) {
+            std::cout << "### jl_getFunctionInfo resolve line" << std::endl;
+            MDNode *scope = prev.Loc.getScope((*it).second.func->getContext());
+            DILexicalBlockFile dilxf = DILexicalBlockFile(scope);
+            *filename = (dilxf.getFilename().data() ? dilxf.getFilename().data() : "none");
             *line = prev.Loc.getLine();
+            std::cout << "file: " << *filename << " lno: " << *line << std::endl;
+
+            DIDescriptor desc(scope);
+            do {
+                if (!scope) {
+                    break;
+                }
+                desc = DIDescriptor(scope);
+                // nested scope
+                if (desc.isLexicalBlockFile()) {
+                    dilxf = DILexicalBlockFile(scope);
+                    scope = dilxf.getScope();
+                } else if (desc.isLexicalBlock()) {
+                    DILexicalBlock dilxb = DILexicalBlock(scope);
+                    *filename = dilxb.getFilename().data();
+                    *line = dilxb.getLineNumber();
+                    std::cout << "LexicalBlock file: " << *filename << " lno: " << *line << std::endl;
+                    scope = dilxb.getContext();
+                }
+            } while (!desc.isSubprogram());
         }
+
         return;
     }
 #endif // USE_MCJIT
