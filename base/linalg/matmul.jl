@@ -9,8 +9,11 @@ arithtype(::Type{Bool}) = Int
 function scale!(C::AbstractMatrix, A::AbstractMatrix, b::AbstractVector)
     m, n = size(A)
     p, q = size(C)
-    if n != length(b) || p != m || q != n
-        throw(DimensionMismatch())
+    if size(A) != size(C)
+        throw(DimensionMismatch("Size of A, $(size(A)), does not match size of C, $(size(C))"))
+    end
+    if n != length(b)
+        throw(DimensionMismatch("Second dimension of A, $n, does not match length of b, $(length(b))"))
     end
     @inbounds for j = 1:n
         bj = b[j]
@@ -24,8 +27,11 @@ end
 function scale!(C::AbstractMatrix, b::AbstractVector, A::AbstractMatrix)
     m, n = size(A)
     p, q = size(C)
-    if m != length(b) || p != m || q != n
-        throw(DimensionMismatch())
+    if size(A) != size(C)
+        throw(DimensionMismatch("Size of A, $(size(A)), does not match size of C, $(size(C))"))
+    end
+    if m != length(b)
+        throw(DimensionMismatch("First dimension of A, $m, does not match length of b, $(length(b))"))
     end
     @inbounds for j = 1:n, i = 1:m
         C[i,j] = A[i,j]*b[i]
@@ -40,14 +46,18 @@ scale(b::Vector, A::Matrix) = scale!(similar(b, promote_type(eltype(A),eltype(b)
 vecdot{T<:BlasReal}(x::Union{DenseArray{T},StridedVector{T}}, y::Union{DenseArray{T},StridedVector{T}}) = BLAS.dot(x, y)
 vecdot{T<:BlasComplex}(x::Union{DenseArray{T},StridedVector{T}}, y::Union{DenseArray{T},StridedVector{T}}) = BLAS.dotc(x, y)
 function dot{T<:BlasReal, TI<:Integer}(x::Vector{T}, rx::Union{UnitRange{TI},Range{TI}}, y::Vector{T}, ry::Union{UnitRange{TI},Range{TI}})
-    length(rx)==length(ry) || throw(DimensionMismatch())
+    if length(rx) != length(ry)
+        throw(DimensionMismatch("Length of rx, $(length(rx)), does not equal length of ry, $(length(ry))"))
+    end
     if minimum(rx) < 1 || maximum(rx) > length(x) || minimum(ry) < 1 || maximum(ry) > length(y)
         throw(BoundsError())
     end
     BLAS.dot(length(rx), pointer(x)+(first(rx)-1)*sizeof(T), step(rx), pointer(y)+(first(ry)-1)*sizeof(T), step(ry))
 end
 function dot{T<:BlasComplex, TI<:Integer}(x::Vector{T}, rx::Union{UnitRange{TI},Range{TI}}, y::Vector{T}, ry::Union{UnitRange{TI},Range{TI}})
-    length(rx)==length(ry) || throw(DimensionMismatch())
+    if length(rx) != length(ry)
+        throw(DimensionMismatch("Length of rx, $(length(rx)), does not equal length of ry, $(length(ry))"))
+    end
     if minimum(rx) < 1 || maximum(rx) > length(x) || minimum(ry) < 1 || maximum(ry) > length(y)
         throw(BoundsError())
     end
