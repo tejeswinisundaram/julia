@@ -30,7 +30,17 @@ isrst(md) =
     isa(flatten(md).content[1], Markdown.Code) &&
     flatten(md).content[1].language == "rst"
 
-torst(md) = isrst(md) ? flatten(md).content[1].code : Markdown.rst(md)
+function tryrst(md)
+    try
+        Markdown.rst(md)
+    catch e
+        warn("Error converting docstring:")
+        display(md)
+        return
+    end
+end
+
+torst(md) = isrst(md) ? flatten(md).content[1].code : tryrst(md)
 
 function remsig(l, doc)
     sig = l[15:end]
@@ -59,10 +69,8 @@ function translate(file)
                 func = func.captures[1]
                 doc = getdoc(mod, func)
 
-                if doc == nothing || !isrst(doc)
-                    doc == nothing ?
-                        info("no docs for $(ident(mod, func))") :
-                        info("can't convert docs for $(ident(mod, func))")
+                if doc == nothing || torst(doc) == nothing
+                    info("no docs for $(ident(mod, func))")
                     println(io, l)
                     doccing = false
                     continue
