@@ -830,14 +830,14 @@ Cluster Managers with custom transports
 ---------------------------------------
 
 Replacing the default TCP/IP all-to-all socket connections with a custom transport layer is a little more involved.
-Each julia process has as many communication tasks as the workers it is connected to. For example, consider a julia cluster of
+Each Julia process has as many communication tasks as the workers it is connected to. For example, consider a Julia cluster of
 32 processes in a all-to-all mesh network:
 
-    - Each julia process thus has 31 communication tasks
+    - Each Julia process thus has 31 communication tasks
     - Each task handles all incoming messages from a single remote worker in a message processing loop
     - The message processing loop waits on an ``AsyncStream`` object - for example, a TCP socket in the default implementation, reads an entire
       message, processes it and waits for the next one
-    - Sending messages to a process is done directly from any julia task - not just communication tasks - again, via the appropriate
+    - Sending messages to a process is done directly from any Julia task - not just communication tasks - again, via the appropriate
       ``AsyncStream`` object
 
 Replacing the default transport involves the new implementation to setup connections to remote workers, and to provide appropriate
@@ -850,20 +850,21 @@ The default implementation (which uses TCP/IP sockets) is implemented as ``conne
 
 ``connect`` should return a pair of ``AsyncStream`` objects, one for reading data sent from worker ``pid``,
 and the other to write data that needs to be sent to worker ``pid``. Custom cluster managers can use an in-memory ``BufferStream``
-as the plumbing to proxy data between the custom, possibly non-AsyncStream transport and julia's in-built parallel infrastructure.
+as the plumbing to proxy data between the custom, possibly non-AsyncStream transport and Julia's in-built parallel infrastructure.
 
 A ``BufferStream`` is an in-memory ``IOBuffer`` which behaves like an ``AsyncStream``.
 
-Folder ``examples/clustermanager/0mq`` is an example of using ZeroMQ is connect julia workers in a star network with a 0MQ broker in the middle.
-Note: The julia processes are still all *logically* connected to each other - any worker can message any other worker directly without any
+Folder ``examples/clustermanager/0mq`` is an example of using ZeroMQ is connect Julia workers in a star network with a 0MQ broker in the middle.
+Note: The Julia processes are still all *logically* connected to each other - any worker can message any other worker directly without any
 awareness of 0MQ being used as the transport layer.
 
 When using custom transports:
-    - julia workers must NOT be started with ``--worker``. Starting with ``--worker`` will result in the newly launched
+
+    - Julia workers must NOT be started with ``--worker``. Starting with ``--worker`` will result in the newly launched
       workers defaulting to the TCP/IP socket transport implementation
     - For every incoming logical connection with a worker, ``Base.process_messages(rd::AsyncStream, wr::AsyncStream)`` must be called.
       This launches a new task that handles reading and writing of messages from/to the worker represented by the ``AsyncStream`` objects
-    - ``init_worker(manager::FooManager)`` MUST be called as part of worker process initializaton
+    - ``init_worker(manager::FooManager)`` MUST be called as part of worker process initialization
     - Field ``connect_at::Any`` in :class:`WorkerConfig` can be set by the cluster manager when ``launch`` is called. The value of
       this field is passed in in all ``connect`` callbacks. Typically, it carries information on *how to connect* to a worker. For example,
       the TCP/IP socket transport uses this field to specify the ``(host, port)`` tuple at which to connect to a worker
@@ -873,7 +874,7 @@ When using custom transports:
 On the master process, the corresponding ``AsyncStream`` objects must be closed by the implementation to ensure proper cleanup. The default
 implementation simply executes an ``exit()`` call on the specified remote worker.
 
-``examples/clustermanager/simple`` is an example that shows a simple implementation using unix domain sockets for cluster setup
+``examples/clustermanager/simple`` is an example that shows a simple implementation using Unix domain sockets for cluster setup
 
 
 Specifying network topology (Experimental)
@@ -881,11 +882,12 @@ Specifying network topology (Experimental)
 
 Keyword argument ``topology`` to ``addprocs`` is used to specify how the workers must
 be connected to each other:
+
     - ``:all_to_all`` : is the default, where all workers are connected to each other.
 
     - ``:master_slave`` : only the driver process, i.e. pid 1 has connections to the workers.
 
-    - ``:custom`` : the ``launch`` method of the cluster manager specifes the connection topology.
+    - ``:custom`` : the ``launch`` method of the cluster manager specifies the connection topology.
       Fields ``ident`` and ``connect_idents`` in ``WorkerConfig`` are used to specify the  same.
       ``connect_idents`` is a list of ``ClusterManager`` provided identifiers to workers that worker
       with identified by ``ident`` must connect to.

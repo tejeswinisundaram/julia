@@ -18,6 +18,7 @@ binary install, you can run the test suite using ``Base.runtests()``.
    string or an array of strings, using ``numcores`` processors. (not exported)
 
 .. module:: Base.Test
+
 Test Framework
 --------------
 
