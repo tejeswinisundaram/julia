@@ -950,7 +950,8 @@ Text I/O
 
 .. function:: base64encode(writefunc, args...)
 
-   ::
+   .. code-block:: julia
+
               base64encode(args...)
 
    Given a ``write``-like function ``writefunc``, which takes an I/O
@@ -989,7 +990,8 @@ Julia environments (such as the IPython-based IJulia notebook).
 
 .. function:: display(x)
 
-   ::
+   .. code-block:: julia
+
               display(d::Display, x)
               display(mime, x)
               display(d::Display, mime, x)
@@ -1011,7 +1013,8 @@ Julia environments (such as the IPython-based IJulia notebook).
 
 .. function:: redisplay(x)
 
-   ::
+   .. code-block:: julia
+
               redisplay(d::Display, x)
               redisplay(mime, x)
               redisplay(d::Display, mime, x)
@@ -1025,7 +1028,8 @@ Julia environments (such as the IPython-based IJulia notebook).
 
 .. function:: displayable(mime) -> Bool
 
-   ::
+   .. code-block:: julia
+
               displayable(d::Display, mime) -> Bool
 
    Returns a boolean value indicating whether the given ``mime`` type (string)
@@ -1147,7 +1151,8 @@ Memory-mapped I/O
 
 .. function:: Mmap.mmap(io::Union(IOStream,AbstractString,Mmap.AnonymousMmap)[, type::Type{Array{T,N}}, dims, offset]; grow::Bool=true, shared::Bool=true)
 
-   ::
+   .. code-block:: julia
+
               Mmap.mmap(type::Type{Array{T,N}}, dims)
 
    Create an ``Array`` whose values are linked to a file, using memory-mapping. This provides a convenient way of working with data too large to fit in the computer's memory.

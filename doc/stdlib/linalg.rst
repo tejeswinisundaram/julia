@@ -41,7 +41,8 @@ Linear algebra functions in Julia are largely implemented by calling functions f
 
 .. function:: dot(x, y)
 
-   ::
+   .. code-block:: julia
+
               ⋅(x,y)
 
    Compute the dot product. For complex vectors, the first vector is conjugated.
@@ -55,7 +56,8 @@ Linear algebra functions in Julia are largely implemented by calling functions f
 
 .. function:: cross(x, y)
 
-   ::
+   .. code-block:: julia
+
               ×(x,y)
 
    Compute the cross product of two 3-vectors.

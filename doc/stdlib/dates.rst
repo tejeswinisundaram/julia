@@ -690,7 +690,8 @@ alternatively, you could call ``using Dates`` to bring all exported functions in
 
 .. function:: eps(::DateTime) -> Millisecond
 
-   ::
+   .. code-block:: julia
+
               eps(::Date) -> Day
 
    Returns ``Millisecond(1)`` for ``DateTime`` values and ``Day(1)`` for ``Date`` values.
@@ -700,7 +701,8 @@ Accessor Functions
 
 .. function:: year(dt::TimeType) -> Int64
 
-   ::
+   .. code-block:: julia
+
               month(dt::TimeType) -> Int64
               week(dt::TimeType) -> Int64
               day(dt::TimeType) -> Int64
@@ -713,7 +715,8 @@ Accessor Functions
 
 .. function:: Year(dt::TimeType) -> Year
 
-   ::
+   .. code-block:: julia
+
               Month(dt::TimeType) -> Month
               Week(dt::TimeType) -> Week
               Day(dt::TimeType) -> Day

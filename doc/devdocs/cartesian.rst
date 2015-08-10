@@ -138,7 +138,8 @@ Macro reference
 
 .. function:: @nloops N itersym rangeexpr bodyexpr
 
-   ::
+   .. code-block:: julia
+
               @nloops N itersym rangeexpr preexpr bodyexpr
               @nloops N itersym rangeexpr preexpr postexpr bodyexpr
 
@@ -194,7 +195,8 @@ Macro reference
 
 .. function:: @nif N conditionexpr expr
 
-   ::
+   .. code-block:: julia
+
               @nif N conditionexpr expr elseexpr
 
     Generates a sequence of ``if ... elseif ... else ... end`` statements. For example::

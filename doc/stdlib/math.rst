@@ -132,7 +132,8 @@ Mathematical Operators
 
 .. function:: div(x, y)
 
-   ::
+   .. code-block:: julia
+
               ÷(x, y)
 
    The quotient from Euclidean division. Computes ``x/y``, truncated to an integer.
@@ -161,7 +162,8 @@ Mathematical Operators
 
 .. function:: rem(x, y)
 
-   ::
+   .. code-block:: julia
+
               %(x, y)
 
    Remainder from Euclidean division, returning a value of the same sign
@@ -251,7 +253,8 @@ Mathematical Operators
 .. _!=:
 .. function:: !=(x, y)
 
-   ::
+   .. code-block:: julia
+
               ≠(x,y)
 
    Not-equals comparison operator. Always gives the opposite answer as ``==``.
@@ -271,7 +274,8 @@ Mathematical Operators
 .. _!==:
 .. function:: !==(x, y)
 
-   ::
+   .. code-block:: julia
+
               ≢(x,y)
 
    Equivalent to ``!is(x, y)``
@@ -288,7 +292,8 @@ Mathematical Operators
 .. _<=:
 .. function:: <=(x, y)
 
-   ::
+   .. code-block:: julia
+
               ≤(x,y)
 
    Less-than-or-equals comparison operator.
@@ -302,7 +307,8 @@ Mathematical Operators
 .. _>=:
 .. function:: >=(x, y)
 
-   ::
+   .. code-block:: julia
+
               ≥(x,y)
 
    Greater-than-or-equals comparison operator.
@@ -315,7 +321,8 @@ Mathematical Operators
 .. _.!=:
 .. function:: .!=(x, y)
 
-   ::
+   .. code-block:: julia
+
               .≠(x,y)
 
    Element-wise not-equals comparison operator.
@@ -328,7 +335,8 @@ Mathematical Operators
 .. _.<=:
 .. function:: .<=(x, y)
 
-   ::
+   .. code-block:: julia
+
               .≤(x,y)
 
    Element-wise less-than-or-equals comparison operator.
@@ -341,7 +349,8 @@ Mathematical Operators
 .. _.>=:
 .. function:: .>=(x, y)
 
-   ::
+   .. code-block:: julia
+
               .≥(x,y)
 
    Element-wise greater-than-or-equals comparison operator.

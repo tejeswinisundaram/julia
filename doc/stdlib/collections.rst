@@ -167,7 +167,8 @@ Iterable Collections
 
 .. function:: in(item, collection) -> Bool
 
-   ::
+   .. code-block:: julia
+
               ∈(item,collection) -> Bool
               ∋(collection,item) -> Bool
               ∉(item,collection) -> Bool
@@ -951,7 +952,8 @@ Iterable Collections
 
 .. function:: issubset(a, b)
 
-   ::
+   .. code-block:: julia
+
               ⊆(A,S) -> Bool
               ⊈(A,S) -> Bool
               ⊊(A,S) -> Bool
@@ -1278,7 +1280,8 @@ Set-Like Collections
 
 .. function:: union(s1,s2...)
 
-   ::
+   .. code-block:: julia
+
               ∪(s1,s2)
 
    Construct the union of two or more sets. Maintains order with arrays.
@@ -1289,7 +1292,8 @@ Set-Like Collections
 
 .. function:: intersect(s1,s2...)
 
-   ::
+   .. code-block:: julia
+
               ∩(s1,s2)
 
    Construct the intersection of two or more sets. Maintains order and multiplicity of the first argument for arrays and ranges.
