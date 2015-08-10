@@ -37,7 +37,7 @@ function remsig(l, doc)
     ls = split(doc, "\n")
     contains(ls[2], sig) && (ls = ls[3:end])
     while ls[1] == "" shift!(ls) end
-    startswith(ls[1], " "^11) && (ls = ["::", ls...])
+    startswith(ls[1], " "^11) && (ls = [".. code-block:: julia", "", ls...])
     join(ls, "\n")
 end
 
